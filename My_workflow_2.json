@@ -1,0 +1,257 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get list of all tables in database",
+        "operation": "executeQuery",
+        "query": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_type = 'BASE TABLE' AND table_schema = 'resourcifyschema';",
+        "options": {}
+      },
+      "id": "c5b6564d-6c4c-47e4-bb29-9e77208d39d4",
+      "name": "DB Schema",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        1640,
+        820
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "URQITEMg4JoTvzKk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get table definition to find all columns and types.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    c.column_name,\n    c.data_type,\n    c.is_nullable,\n    c.column_default,\n    tc.constraint_type,\n    ccu.table_name AS referenced_table,\n    ccu.column_name AS referenced_column\nFROM \n    information_schema.columns c\nLEFT JOIN \n    information_schema.key_column_usage kcu \n    ON c.table_name = kcu.table_name \n    AND c.column_name = kcu.column_name\nLEFT JOIN \n    information_schema.table_constraints tc \n    ON kcu.constraint_name = tc.constraint_name\n    AND tc.constraint_type = 'FOREIGN KEY'\nLEFT JOIN\n    information_schema.constraint_column_usage ccu\n    ON tc.constraint_name = ccu.constraint_name\nWHERE \n    c.table_name = '{{ $fromAI(\"table_name\") }}' -- Your table name\n    AND c.table_schema = 'resourcifyschema' -- Ensure it's in the right schema\nORDER BY \n    c.ordinal_position;\n",
+        "options": {}
+      },
+      "id": "9f8c7f9b-dab7-4e2e-8edd-6244e65bcc6c",
+      "name": "Get table definition",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        1800,
+        820
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "URQITEMg4JoTvzKk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Run custom SQL queries using knowledge about Output structure to provide needed response for user request.\nUse ->> operator to extract JSON data.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI(\"query\",\"SQL query for PostgreSQL DB in Supabase\") }}",
+        "options": {}
+      },
+      "id": "4a6a1a45-f5b7-4193-8502-4174c80b200c",
+      "name": "Run SQL Query",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        1480,
+        820
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "URQITEMg4JoTvzKk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        920,
+        820
+      ],
+      "id": "74b8f2c0-c578-4a2d-be3d-026ca2d5f703",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "Obu1JtXnlw26OZCt",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant, who queries the connected database to fetch relevant results.\n\nUse the resourcifyschema to find tables and data\n\nGive appropraite error messages when you find the query to not be relevant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1320,
+        580
+      ],
+      "id": "50af9cae-cbb1-47b6-b187-5ed9b75fec5c",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8b250293-0f80-404d-b5c9-905dcb31e8d0",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        980,
+        580
+      ],
+      "id": "5e0598c2-f0b8-4873-89b6-24b04122fb92",
+      "name": "Webhook",
+      "webhookId": "8b250293-0f80-404d-b5c9-905dcb31e8d0"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1340,
+        820
+      ],
+      "id": "773c4801-6024-4e56-bd0f-b10435d3c9c7",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "URQITEMg4JoTvzKk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1140,
+        820
+      ],
+      "id": "58eb62ca-6b64-4ce0-90d0-3b98c72ed157",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SU3xKvlh9CJCKky9",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DB Schema": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run SQL Query": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get table definition": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c8759afc-a83c-418a-a1fa-bcd3d0b78434",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5c84ff351fab611161f9ecdcbd8925612fc6263fb0446ac51a4f6a3038fa1745"
+  },
+  "id": "TcuDfZWDCjJhcO1S",
+  "tags": []
+}

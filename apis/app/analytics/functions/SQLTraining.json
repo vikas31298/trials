@@ -1,0 +1,17 @@
+[
+    {
+        "query": "How many resources do we have in total?",
+        "sql": "SELECT COUNT(*) FROM Person;",
+        "params": []
+    },
+    {
+        "query": "Show me the top {limit} employees with max workload",
+        "sql": "SELECT * FROM employees ORDER BY workload DESC LIMIT {limit};",
+        "params": ["limit"]
+    },
+    {
+        "query": "Which employees are currently unassigned?",
+        "sql": "SELECT * FROM employees WHERE assigned = FALSE;",
+        "params": []
+    }
+]

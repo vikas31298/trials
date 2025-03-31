@@ -1,0 +1,62 @@
+[
+    {
+        "name": "get_project_resources",
+        "description": "To get the list of persons who are currently working on the project.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "project_name": {"type": "string", "description": "The project name"}
+            },
+            "required": ["project_name"]
+        }
+    },
+    {
+        "name": "get_project_status",
+        "description": "Get the status of a project.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "integer", "description": "The project ID"}
+            },
+            "required": ["project_id"]
+        }
+    },
+    {
+        "name": "allocate_resources",
+        "description": "Allocate resources to a project.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "integer", "description": "The project ID"}
+            },
+            "required": ["project_id"]
+        }
+    },
+    {
+        "name": "get_team_availability",
+        "description": "Get team availability details.",
+        "parameters": {}
+    },
+    {
+        "name": "get_resources_with_given_skills",
+        "description": "To get the list of employees, resources or persons who possess given skillsets.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "skill_name": {"type": "string", "description": "The Skill names"}
+            },
+            "required": ["skill_name"]
+        }
+    },
+    {
+        "name": "greeting",
+        "description": "Respond to greetings like 'hi', 'hello', etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "greeting_text": {"type": "string", "description": "User's greeting message"}
+            },
+            "required": ["greeting_text"]
+        }
+    }
+]
