@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+   "postgres-local":{
+      "command": "docker",
+      "args":[
+        "run",
+        "-i",
+        "--rm",
+        "mcp-postgres-server",
+        "postgresql://postgres:postgres@host.docker.internal:5433/ResourcifyDB"
+      ]
+    }
+  }
+}
